@@ -290,21 +290,41 @@ zookeeper:
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   resources: ~
 
-  ## The JVM heap size to allocate to Zookeeper
-  heap: "1G"
+  ## Desired quantity of ZooKeeper pods. This should always be (1,3,5, or 7)
+  replicaCount: 3
 
   persistence:
-    enabled: false
-    ## The amount of PV storage allocated to each Zookeeper pod in the statefulset
-    # size: "2Gi"
+    enabled: true
+    ## zookeeper data Persistent Volume Storage Class
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    # storageClass: "-"
+    accessMode: ReadWriteOnce
+    size: 5Gi
 
-  ## Specify a Zookeeper imagePullPolicy
+  ## Specify a Zookeeper image
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
-  imagePullPolicy: "IfNotPresent"
-
-  ## If the Zookeeper Chart is disabled a URL and port are required to connect
-  url: ""
-  port: 2181
+  image:
+    repository: gcr.io/google_samples/k8szk
+    tag: v3
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP  # Exposes zookeeper on a cluster-internal IP.
+    annotations: {}  # Arbitrary non-identifying metadata for zookeeper service.
+      ## AWS example for use with LoadBalancer service type.
+      # external-dns.alpha.kubernetes.io/hostname: zookeeper.cluster.local
+      # service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      # service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    ports:
+      client:
+        port: 2181  # Service port number for client port.
+        targetPort: client  # Service target port for client port.
+        protocol: TCP
 
   ## Pod scheduling preferences (by default keep pods within a release on separate nodes).
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
